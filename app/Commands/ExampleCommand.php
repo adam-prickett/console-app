@@ -16,7 +16,7 @@ class ExampleCommand extends Command
             'options' => [
                 ['timestamp', 't']
             ],
-            'arguments' => 1,
+            'arguments' => 0,
         ];
     }
 
