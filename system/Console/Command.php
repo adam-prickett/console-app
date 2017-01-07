@@ -9,8 +9,12 @@
 
 namespace System\Console;
 
+use System\Console\CommandOutput;
+
 class Command
 {
+    use CommandOutput;
+
     /** @var array Arguments passed to the command */
     protected $arguments = [];
 
