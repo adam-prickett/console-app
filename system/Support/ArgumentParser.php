@@ -2,6 +2,8 @@
 
 namespace System\Support;
 
+use System\Support\ArgumentCollection;
+
 class ArgumentParser
 {
     /** @var string The command name parsed from the arguments */
@@ -15,7 +17,6 @@ class ArgumentParser
     
     /** @var boolean Holds whether arguments have yet been processed */
     protected $reachedArguments = false;
-    
 
     /**
      * Parse provided arguments and return associative array
@@ -50,11 +51,6 @@ class ArgumentParser
     protected function parseArgument($argument)
     {
         if ($this->isOption($argument) or $this->isShortOption($argument)) {
-            // Options may only be passed before any arguments
-            if ($this->reachedArguments) {
-                throw new \Exception('Options must be passed before arguments');
-            }
-
             $option = $this->isValueOption($argument) ? $this->parseValueOption($argument) : $this->parseOption($argument, $this->isShortOption($argument));
             $this->addOption($option['key'], $option['value']);
         }
@@ -199,10 +195,10 @@ class ArgumentParser
      */
     protected function compileArray()
     {
-        return [
+        return new ArgumentCollection([
             'command' => $this->command,
             'options' => $this->options,
             'args' => $this->args
-        ];
+        ]);
     }
 }

@@ -1,32 +1,22 @@
 <?php
 
-namespace App\Commands;
+namespace Commands;
 
 use System\Console\Command;
 
 class ExampleCommand extends Command
 {
     /**
-     * Specifies the required options and arguments
-     * @return array
+     * Setup the Command
+     * @return void
      */
-    public function required()
+    public function setup()
     {
-        return [
-            'options' => [
-                ['timestamp', 't']
-            ],
-            'arguments' => 0,
-        ];
-    }
-
-    /**
-     * Provides the short description of this command for the command list
-     * @return string
-     */
-    public function description()
-    {
-        return 'Example command - prints the date and time';
+        $this->setCommand('example')
+                ->setDescription('Example command - prints the date and time')
+                ->requiresOption(['timestamp', 't'])
+                ->requiresArgument('format')
+                ->acceptsArgument('timezone');
     }
 
     /**
@@ -55,6 +45,6 @@ EOS;
     {
         $timestamp = $this->option(['timestamp', 't'], time());
 
-        print date('l, d F Y H:i', $timestamp);
+        $this->output(date($this->argument('format'), $timestamp));
     }
 }

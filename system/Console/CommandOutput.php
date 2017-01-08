@@ -4,7 +4,7 @@
  *
  * @author Adam Prickett <adam.prickett@gmail.com>
  * @license MIT
- * @copyright © Copyright Adam Prickett 2016.
+ * @copyright © Copyright Adam Prickett 2017.
  */
 
 namespace System\Console;
@@ -51,9 +51,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function output($string, $options = [])
+    public function output($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes($this->foregroundColours['default'], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes($this->foregroundColours['default'], $options), $string, $this->stringTerminator);
     }
 
     /**
@@ -62,9 +62,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function info($string, $options = [])
+    public function info($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes($this->foregroundColours['blue'], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes($this->foregroundColours['blue'], $options), $string, $this->stringTerminator);
     }
 
     /**
@@ -73,9 +73,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function highlight($string, $options = [])
+    public function highlight($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes($this->foregroundColours['magenta'], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes($this->foregroundColours['magenta'], $options), $string, $this->stringTerminator);
     }
 
     /**
@@ -84,9 +84,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function warn($string, $options = [])
+    public function warn($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes($this->foregroundColours['yellow'], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes($this->foregroundColours['yellow'], $options), $string, $this->stringTerminator);
     }
 
     /**
@@ -95,9 +95,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function danger($string, $options = [])
+    public function danger($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes($this->foregroundColours['red'], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes($this->foregroundColours['red'], $options), $string, $this->stringTerminator);
     }
 
     /**
@@ -106,9 +106,9 @@ trait CommandOutput
      * @param  array  $options
      * @return void
      */
-    public function error($string, $options = [])
+    public function error($string, $options = [], $newline = true)
     {
-        printf("\033[%sm%s%s".PHP_EOL, $this->parseSetCodes([$this->foregroundColours['white'], $this->backgroundColours['red']], $options), $string, $this->stringTerminator);
+        printf("\033[%sm%s%s".($newline ? PHP_EOL : null), $this->parseSetCodes([$this->foregroundColours['white'], $this->backgroundColours['red']], $options), $string, $this->stringTerminator);
     }
 
     /**

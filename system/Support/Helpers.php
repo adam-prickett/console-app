@@ -4,7 +4,7 @@
  *
  * @author Adam Prickett <adam.prickett@gmail.com>
  * @license MIT
- * @copyright © Copyright Adam Prickett 2016.
+ * @copyright © Copyright Adam Prickett 2017.
  */
 
 if (!function_exists('env')) {

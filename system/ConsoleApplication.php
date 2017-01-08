@@ -4,59 +4,69 @@
  *
  * @author Adam Prickett <adam.prickett@gmail.com>
  * @license MIT
- * @copyright © Copyright Adam Prickett 2016.
+ * @copyright © Copyright Adam Prickett 2017.
  */
 
 namespace System;
 
 use App\ConsoleKernel;
+use System\Console\Command;
+use System\Console\CommandOutput;
 use System\Support\ArgumentParser;
+use System\Support\ArgumentCollection;
 
 class ConsoleApplication
 {
+    use CommandOutput;
+
     /**
      * Runs the Console Application
-     * @param  array $arguments
+     * @param  array    $arguments
      * @return output
      */
-    public function run(array $arguments = null)
+    public function run()
     {
-        // Load the Kernel
-        $kernel = new ConsoleKernel;
-        $map = $kernel->mapCommands();
-        
+        $commandMap = $this->enumerateCommandsFromFiles();
+
+        if (empty($arguments)) {
+            $arguments = $_SERVER['argv'];
+        }
+        array_shift($arguments);
+
         // Parse the arguments into a useful array
         $parser = new ArgumentParser;
         $parsed = $parser->parse($arguments);
 
         // If no command is provided, print the command list
-        if (empty($parsed['command'])) {
-            return $this->printCommands($map);
+        if (empty($parsed->getCommand())) {
+            return $this->printCommands($commandMap);
         }
 
         // If this command exists in the map, run the command
-        if (isset($map[$parsed['command']])) {
-            return $this->runCommand($parsed, $map);
+        if (isset($commandMap[$parsed->getCommand()])) {
+            return $this->runCommand($parsed, $commandMap);
         }
 
         // Return the negative
-        printf('%s does not exist'.PHP_EOL, $parsed['command']);
+        printf('%s does not exist'.PHP_EOL, $parsed->getCommand());
         die;
     }
 
     /**
      * Run the command
-     * @param  array  $arguments
-     * @param  array  $map
+     * @param  ArgumentCollection   $arguments
+     * @param  array                $map
      * @return
      */
-    private function runCommand(array $arguments, array $map)
+    private function runCommand(ArgumentCollection $arguments, array $map)
     {
-        $class = new \ReflectionClass($map[$arguments['command']]);
+        $class = new \ReflectionClass($map[$arguments->getCommand()]);
         $instance = $class->newInstanceArgs([$arguments]);
 
+        $options = $arguments->getOptions();
+
         // Handle --help option is provided
-        if (isset($arguments['options']['help'])) {
+        if (isset($options['help'])) {
             return $this->handleHelpOption($instance, $arguments);
         }
 
@@ -64,7 +74,7 @@ class ConsoleApplication
         $this->handleRequired($instance, $arguments);
 
         // Silence any output if --quiet or -q are parsed
-        if (isset($arguments['options']['quiet']) or isset($arguments['options']['q'])) {
+        if (isset($options['quiet']) or isset($options['q'])) {
             ob_start();
             $instance->run();
             ob_end_clean();
@@ -87,81 +97,73 @@ class ConsoleApplication
         sort($commands);
 
         // Print the available commands
-        print '---------------'.PHP_EOL;
-        print 'Available commands:'.PHP_EOL;
-        print '---------------'.PHP_EOL;
+        $this->output('---------------');
+        $this->warn('Available commands:', ['underscore', 'bold']);
+        $this->output('---------------');
         foreach ($commands as $command) {
             $class = new \ReflectionClass($map[$command]);
             $instance = $class->newInstanceArgs();
             
-            // If the Command exposes description(), print alongside.
-            if (method_exists($instance, 'description')) {
-                print $command.' - '.$instance->description().PHP_EOL;
-            } else {
-                print $command.PHP_EOL;
-            }
+            $this->output($command, ['underscore'], false);
+            $this->output(' - '.$instance->getDescription());
 
             unset($instance);
             unset($class);
         }
-        print '---------------'.PHP_EOL;
+        $this->output('---------------');
     }
 
     /**
      * Check if --help option was provided and supply info
-     * @param  ReflectionClass $instance
-     * @param  array           $opts
+     * @param  Command              $instance
+     * @param  ArgumentCollection   $arguments
      * @return mixed
      */
-    private function handleHelpOption($instance, $args)
+    private function handleHelpOption(Command $instance, ArgumentCollection $arguments)
     {
         if (method_exists($instance, 'help')) {
             print $instance->help();
             return;
         }
 
-        printf('%s does not provide any help'.PHP_EOL, $args['command']);
+        printf('%s does not provide any help'.PHP_EOL, $arguments->getCommand());
         return 0;
     }
 
     /**
      * Check if required options are specified and parse
-     * @param  ReflectionClass  $instance
-     * @param  array            $args
+     * @param  Command              $instance
+     * @param  ArgumentCollection   $arguments
      * @return mixed
      */
-    private function handleRequired($instance, $args)
+    private function handleRequired(Command $instance, ArgumentCollection $arguments)
     {
-        if (method_exists($instance, 'required')) {
-            $required = $instance->required();
-            
-            // Iterate over required options, if provided
-            if (isset($required['options'])) {
-                foreach ($required['options'] as $option) {
-                    $this->checkRequiredOption($option, $args);
-                }
-            }
+        // Check for number of required arguments
+        if (count($instance->getRequiredArguments()) > count($arguments->getArguments())) {
+            print $this->formatCommand($instance);
+            die;
+        }
 
-            // Check for number of required arguments
-            if (isset($required['arguments']) and count($args['args']) != $required['arguments']) {
-                printf("%d arguments required", $required['arguments']);
-                die;
-            }
+        // Iterate over required options, if provided
+        foreach ($instance->getRequiredOptions() as $option) {
+            $this->checkRequiredOption($option, $arguments);
         }
     }
 
     /**
      * Check required params and validate
-     * @param  string|array $option
-     * @param  array        $args
+     * @param  string|array         $option
+     * @param  ArgumentCollection   $arguments
      * @return void
      */
-    private function checkRequiredOption($option, $args)
+    private function checkRequiredOption($option, ArgumentCollection $arguments)
     {
+        $options = $arguments->getOptions();
+
         // $option can be an array for variations
         if (is_array($option)) {
-            $present = array_filter($option, function ($value) use ($args) {
-                return isset($args['options'][$value]);
+            $present = array_filter($option, function ($value) use ($options) {
+                return isset($options[$value]);
             });
 
             if (count($present) == 0) {
@@ -171,8 +173,8 @@ class ConsoleApplication
                 die;
             }
         }
-            
-        if (!is_array($option) and !isset($args['options'][$option])) {
+        
+        if (!is_array($option) and !isset($options[$option])) {
             printf("%s option missing", $this->formatOption($option));
             die;
         }
@@ -186,5 +188,50 @@ class ConsoleApplication
     private function formatOption($option)
     {
         return strlen($option) == 1 ? '-'.$option : '--'.$option;
+    }
+
+    /**
+     * Format the command syntax for outputting
+     * @return string
+     */
+    private function formatCommand(Command $instance)
+    {
+        $required = $instance->getRequiredArguments();
+        return sprintf("php run %s %s", $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
+            return !in_array($arg, $required) ? sprintf('[%s]', strtoupper($arg)) : strtoupper($arg);
+        }, $instance->getArguments())));
+    }
+
+    /**
+     * Enumerate commands from filesystem
+     * @return array
+     */
+    private function enumerateCommandsFromFiles()
+    {
+        $commands = [];
+        $files = $this->scanCommandDirectory();
+        foreach ($files as $file) {
+            $className = '\\Commands\\'.preg_replace('/\.php/', '', $file);
+            $class = new \ReflectionClass($className);
+            $instance = $class->newInstanceArgs();
+            if ($instance instanceof \System\Console\Command) {
+                if (!empty($instance->getCommand())) {
+                    $commands[$instance->getCommand()] = $className;
+                }
+            }
+        }
+
+        return $commands;
+    }
+
+    /**
+     * Scan the Commands directory for .php files
+     * @return array
+     */
+    private function scanCommandDirectory()
+    {
+        return array_filter(scandir(FRONT_CONTROLLER_PATH.'/commands'), function ($file) {
+            return preg_match('/\w\.php/', $file);
+        });
     }
 }

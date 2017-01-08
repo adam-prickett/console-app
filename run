@@ -5,7 +5,7 @@
  *
  * @author Adam Prickett <adam.prickett@gmail.com>
  * @license MIT
- * @copyright © Copyright Adam Prickett 2016.
+ * @copyright © Copyright Adam Prickett 2017.
  */
 
 require 'vendor/autoload.php';
@@ -14,16 +14,12 @@ date_default_timezone_set('Europe/London');
 
 define('FRONT_CONTROLLER_PATH', rtrim(dirname(__FILE__), '/').'/');
 
-$dotenv = new \Dotenv\Dotenv('./');
+// Load .env configuration
+$dotenv = new Dotenv\Dotenv('./');
 $dotenv->load();
-
-$arguments = $_SERVER['argv'];
-
-// The first argument wil simply be this script name
-array_shift($arguments);
 
 // Load to Console Application and run
 $app = new System\ConsoleApplication;
-$app->run($arguments);
+$app->run();
 
 return;
