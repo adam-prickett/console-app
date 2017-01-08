@@ -37,7 +37,7 @@ trait CommandOutput
 
     protected $styles = [
         'bold'      => '1',
-        'underscore'=> '4',
+        'underline' => '4',
         'blink'     => '5',
     ];
 
