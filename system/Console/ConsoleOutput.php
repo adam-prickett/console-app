@@ -9,7 +9,7 @@
 
 namespace System\Console;
 
-trait CommandOutput
+trait ConsoleOutput
 {
     protected $foregroundColours = [
         'black'     => '30',

@@ -9,7 +9,7 @@
 
 namespace System\Console;
 
-trait CommandProgressBar
+trait ConsoleProgressBar
 {
     protected $progressBarStarted = false;
     protected $progressBarActive = false;

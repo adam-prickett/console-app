@@ -9,13 +9,13 @@
 
 namespace System\Console;
 
-use System\Console\CommandOutput;
-use System\Console\CommandProgressBar;
+use System\Console\ConsoleOutput;
+use System\Console\ConsoleProgressBar;
 use System\Support\ArgumentCollection;
 
 class Command
 {
-    use CommandOutput, CommandProgressBar;
+    use ConsoleOutput, ConsoleProgressBar;
 
     /** @var string The command to run this Command */
     protected $command;
