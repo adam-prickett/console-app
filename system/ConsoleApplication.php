@@ -19,6 +19,8 @@ class ConsoleApplication
 {
     use ConsoleOutput;
 
+    protected $scriptName;
+
     /**
      * Runs the Console Application
      * @param  array    $arguments
@@ -31,7 +33,7 @@ class ConsoleApplication
         if (empty($arguments)) {
             $arguments = $_SERVER['argv'];
         }
-        array_shift($arguments);
+        $this->scriptName = array_shift($arguments);
 
         // Parse the arguments into a useful array
         $parser = new ArgumentParser;
@@ -197,7 +199,7 @@ class ConsoleApplication
     private function formatCommand(Command $instance)
     {
         $required = $instance->getRequiredArguments();
-        return sprintf("php run %s %s", $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
+        return sprintf("php %s %s %s", $this->scriptName, $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
             return !in_array($arg, $required) ? sprintf('[%s]', strtoupper($arg)) : strtoupper($arg);
         }, $instance->getArguments())));
     }
@@ -211,9 +213,12 @@ class ConsoleApplication
         $commands = [];
         $files = $this->scanCommandDirectory();
         foreach ($files as $file) {
-            $className = '\\Commands\\'.preg_replace('/\.php/', '', $file);
+            // Generate fully namespaced PSR-4 class name from filename
+            $className = env('COMMANDS_NAMESPACE', '\\Commands').'\\'.preg_replace('/\.php/', '', $file);
+            // Create an instance of the class
             $class = new \ReflectionClass($className);
             $instance = $class->newInstanceArgs();
+            
             if ($instance instanceof \System\Console\Command) {
                 if (!empty($instance->getCommand())) {
                     $commands[$instance->getCommand()] = $className;
@@ -230,8 +235,8 @@ class ConsoleApplication
      */
     private function scanCommandDirectory()
     {
-        return array_filter(scandir(FRONT_CONTROLLER_PATH.'/commands'), function ($file) {
-            return preg_match('/\w\.php/', $file);
+        return array_filter(scandir(FRONT_CONTROLLER_PATH.env('COMMANDS_DIR', '/commands')), function ($file) {
+            return preg_match(env('COMMANDS_REGEX', '/\w\.php/'), $file);
         });
     }
 }
