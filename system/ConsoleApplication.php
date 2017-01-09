@@ -11,13 +11,13 @@ namespace System;
 
 use App\ConsoleKernel;
 use System\Console\Command;
-use System\Console\CommandOutput;
+use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
 
 class ConsoleApplication
 {
-    use CommandOutput;
+    use ConsoleOutput;
 
     /**
      * Runs the Console Application
