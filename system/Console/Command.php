@@ -10,11 +10,12 @@
 namespace System\Console;
 
 use System\Console\CommandOutput;
+use System\Console\CommandProgressBar;
 use System\Support\ArgumentCollection;
 
 class Command
 {
-    use CommandOutput;
+    use CommandOutput, CommandProgressBar;
 
     /** @var string The command to run this Command */
     protected $command;
