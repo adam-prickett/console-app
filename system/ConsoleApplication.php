@@ -214,7 +214,8 @@ class ConsoleApplication
         $files = $this->scanCommandDirectory();
         foreach ($files as $file) {
             // Generate fully namespaced PSR-4 class name from filename
-            $className = env('COMMANDS_NAMESPACE', '\\Commands').'\\'.preg_replace('/\.php/', '', $file);
+            $className = $this->createPsr4Namespace($file);
+
             // Create an instance of the class
             $class = new \ReflectionClass($className);
             $instance = $class->newInstanceArgs();
@@ -235,8 +236,23 @@ class ConsoleApplication
      */
     private function scanCommandDirectory()
     {
-        return array_filter(scandir(FRONT_CONTROLLER_PATH.env('COMMANDS_DIR', '/commands')), function ($file) {
+        return array_filter(glob("{".FRONT_CONTROLLER_PATH.env('COMMANDS_DIR', 'commands')."/*.php,".FRONT_CONTROLLER_PATH."system/Commands/*.php}", GLOB_BRACE), function ($file) {
             return preg_match(env('COMMANDS_REGEX', '/\w\.php/'), $file);
         });
+    }
+
+    /**
+     * Generate a PSR-4 compliant namespace string from an absolute file string
+     * @param  string $file
+     * @return string
+     */
+    private function createPsr4Namespace($file)
+    {
+        $baseNamespace = str_replace(FRONT_CONTROLLER_PATH, '', $file);
+        $namespaceParts = explode('/', $baseNamespace);
+
+        return '\\'.implode('\\', array_map(function ($value) {
+            return ucfirst(str_replace('.php', '', $value));
+        }, $namespaceParts));
     }
 }

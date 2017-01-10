@@ -1,0 +1,46 @@
+<?php
+
+namespace {$COMMAND_NAMESPACE};
+
+use System\Console\Command;
+
+class {$COMMAND_NAME} extends Command
+{
+    /**
+     * Setup the Command
+     * @return void
+     */
+    public function setup()
+    {
+        $this->setCommand('{$COMMAND_COMMAND}')
+                ->setDescription('{$COMMAND_DESCRIPTION}');
+    }
+
+    /**
+     * Provides the help text for this command
+     * @return string
+     */
+    public function help()
+    {
+        return <<<EOS
+--------------------
+{$COMMAND_NAME}
+{$COMMAND_DESCRIPTION}
+--------------------
+php run {$COMMAND_COMMAND}
+--------------------
+
+  -q/--quiet        Silences output
+  --help            Prints this help text
+EOS;
+    }
+
+    /**
+     * Run the program
+     * @return void
+     */
+    public function run()
+    {
+        //
+    }
+}
