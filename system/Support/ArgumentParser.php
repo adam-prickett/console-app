@@ -1,4 +1,11 @@
 <?php
+/**
+ * Console App Framework
+ *
+ * @author Adam Prickett <adam.prickett@ampersa.co.uk>
+ * @license MIT
+ * @copyright © Copyright Ampersa Ltd 2017.
+ */
 
 namespace System\Support;
 

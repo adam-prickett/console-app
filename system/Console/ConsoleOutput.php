@@ -2,9 +2,9 @@
 /**
  * Console App Framework
  *
- * @author Adam Prickett <adam.prickett@gmail.com>
+ * @author Adam Prickett <adam.prickett@ampersa.co.uk>
  * @license MIT
- * @copyright © Copyright Adam Prickett 2017.
+ * @copyright © Copyright Ampersa Ltd 2017.
  */
 
 namespace System\Console;

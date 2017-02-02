@@ -1,6 +1,6 @@
 # Console App Framework
 
-Simple framework for console app
+Simple framework for console apps
 
 ## Usage
 

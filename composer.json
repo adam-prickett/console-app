@@ -1,5 +1,5 @@
 {
-    "name": "adam-prickett/console-app",
+    "name": "ampersa/console-app",
     "description": "Simple Console App Framework",
     "require": {
         "php": ">=5.6",
