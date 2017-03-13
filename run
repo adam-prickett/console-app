@@ -10,8 +10,6 @@
 
 require 'vendor/autoload.php';
 
-date_default_timezone_set('Europe/London');
-
 define('FRONT_CONTROLLER_PATH', rtrim(dirname(__FILE__), '/').'/');
 
 // Load .env configuration
@@ -19,7 +17,7 @@ $dotenv = new Dotenv\Dotenv('./');
 $dotenv->load();
 
 // Load to Console Application and run
-$app = new System\ConsoleApplication;
+$app = new System\Application;
 $app->run();
 
 return;

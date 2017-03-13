@@ -9,15 +9,17 @@
 
 namespace System;
 
-use App\ConsoleKernel;
 use System\Console\Command;
+use System\Application\Bootstrap;
 use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
 
-class ConsoleApplication
+class Application
 {
     use ConsoleOutput;
+
+    const VERSION = '1.3';
 
     protected $scriptName;
 
@@ -28,6 +30,8 @@ class ConsoleApplication
      */
     public function run()
     {
+        Bootstrap::run();
+        
         $commandMap = $this->enumerateCommandsFromFiles();
 
         if (empty($arguments)) {
@@ -62,8 +66,8 @@ class ConsoleApplication
      */
     private function runCommand(ArgumentCollection $arguments, array $map)
     {
-        $class = new \ReflectionClass($map[$arguments->getCommand()]);
-        $instance = $class->newInstanceArgs([$arguments]);
+        $className = $map[$arguments->getCommand()];
+        $instance = new $className($arguments);
 
         $options = $arguments->getOptions();
 
@@ -84,7 +88,6 @@ class ConsoleApplication
             return;
         }
 
-        // Run the Command program "normally"
         return $instance->run();
     }
 
@@ -103,14 +106,14 @@ class ConsoleApplication
         $this->warn('Available commands:', ['underscore', 'bold']);
         $this->output('---------------');
         foreach ($commands as $command) {
-            $class = new \ReflectionClass($map[$command]);
-            $instance = $class->newInstanceArgs();
+            $className = $map[$command];
+            $instance = new $className();
             
             $this->output($command, ['underscore'], false);
             $this->output(' - '.$instance->getDescription());
 
             unset($instance);
-            unset($class);
+            unset($className);
         }
         $this->output('---------------');
     }
@@ -124,7 +127,7 @@ class ConsoleApplication
     private function handleHelpOption(Command $instance, ArgumentCollection $arguments)
     {
         if (method_exists($instance, 'help')) {
-            print $instance->help();
+            print $instance->help().PHP_EOL.PHP_EOL;
             return;
         }
 
@@ -217,14 +220,16 @@ class ConsoleApplication
             $className = $this->createPsr4Namespace($file);
 
             // Create an instance of the class
-            $class = new \ReflectionClass($className);
-            $instance = $class->newInstanceArgs();
+            $instance = new $className();
             
             if ($instance instanceof \System\Console\Command) {
                 if (!empty($instance->getCommand())) {
                     $commands[$instance->getCommand()] = $className;
                 }
             }
+
+            // Tidy-up
+            unset($instance);
         }
 
         return $commands;

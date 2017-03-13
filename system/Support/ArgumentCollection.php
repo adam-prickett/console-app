@@ -20,6 +20,10 @@ class ArgumentCollection
     /** @var array */
     protected $arguments = [];
 
+    /**
+     * Construct the Collection and assign passed $items
+     * @param array|null $items
+     */
     public function __construct($items = null)
     {
         if (is_array($items)) {
