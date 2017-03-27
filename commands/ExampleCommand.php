@@ -1,8 +1,8 @@
 <?php
 /**
- * Console App Framework
+ * Hotdog - Console Micro-Framework
  *
- * @author Adam Prickett <adam.prickett@ampersa.co.uk>
+ * @author Ampersa Ltd <contact@ampersa.co.uk>
  * @license MIT
  * @copyright © Copyright Ampersa Ltd 2017.
  */
@@ -14,9 +14,9 @@ use System\Console\Command;
 
 class ExampleCommand extends Command
 {
-    protected $signature = 'example {--timestamp|-t}
-                                    {format}
-                                    {timezone?}';
+    protected $signature = 'example (An example command)    {--timestamp|-t}
+                                                            {format}
+                                                            {timezone?}';
 
     /**
      * Setup the Command

@@ -29,7 +29,7 @@ class {$COMMAND_NAME} extends Command
 {$COMMAND_NAME}
 {$COMMAND_DESCRIPTION}
 --------------------
-php run {$COMMAND_COMMAND}
+php hotdog {$COMMAND_COMMAND}
 --------------------
 
   -q/--quiet        Silences output

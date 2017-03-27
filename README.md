@@ -1,29 +1,35 @@
-# Console App Framework
+# Hotdog
+## A Console App Micro-Framework
 
-Simple framework for console apps
+![license](https://img.shields.io/github/license/ampersa/console-app.svg)
+![Github tag](https://img.shields.io/github/tag/ampersa/console-app.svg)
+![GitHub contributors](https://img.shields.io/github/contributors/ampersa/console-app.svg)
+![GitHub forks](https://img.shields.io/github/forks/ampersa/console-app.svg?style=social&label=Fork&style=plastic)
+
+A simple framework for creating console apps and quick microservices
 
 ## Usage
 
-Run ```php run``` to list available commands:
+Run ```php hotdog``` to list available commands:
 
 ```
-$ php run
----------------
+$ php hotdog
+--------------------
 Available commands:
----------------
+--------------------
 example - Example command - prints the date and time
 new - Create a new command from stub
----------------
+--------------------
 ```
 
 ### Create a new Command
 
 ```
-$ php run new --help
+$ php hotdog new --help
 
 Create a new command from stub file and place in the commands directory
 
-php run new NAME COMMAND
+php hotdog new NAME COMMAND
 
 Options
 ---------
@@ -37,7 +43,7 @@ Options
 
 For example: 
 ```
-$ php run new ProcessCommand process --description="Process a file"
+$ php hotdog new ProcessCommand process --description="Process a file"
 ```
 
 ### Global Options
@@ -58,21 +64,40 @@ Commands are placed in the commands/ directory and are enumerated automatically.
 
 namespace Commands;
 
+use System\Log\Log;
 use System\Console\Command;
 
 class ExampleCommand extends Command
 {
+    /**
+     * Signature formats:
+     *  COMMAND (DESCRIPTION) {--OPTION|-O} {--OPTIONAL?} {ARGUMENT} {ARGUMENT?}
+     *     1          2              3             4           5          6
+     *
+     * 1) The command to run this Command via run
+     * 2) An optional description that displays in the command list
+     * 3) A compulsary option, with short alias
+     * 4) An optional option
+     * 5) A compulsary argument
+     * 6) An optional argument
+     */
+    protected $signature = 'example (Prints the date and time)  {--timestamp|-t}
+                                                                {format}
+                                                                {timezone?}';
+
     /**
      * Setup the Command
      * @return void
      */
     public function setup()
     {
-        $this->setCommand('example')
-                ->setDescription('Example command - prints the date and time')
-                ->requiresOption(['timestamp', 't'])
-                ->requiresArgument('format')
-                ->acceptsArgument('timezone');
+        // The $signature can instead be specified fluently
+        //
+        // $this->setCommand('example')
+        //        ->setDescription('Example command - prints the date and time')
+        //        ->requiresOption(['timestamp', 't'])
+        //        ->requiresArgument('format')
+        //        ->acceptsArgument('timezone');
     }
 
     /**
@@ -167,4 +192,14 @@ Example:
 Progress...
 5/10 [#############            ] 50%
 
+```
+
+## Shortcut usage
+
+Hotdog may be run without the _php_ prefix:
+
+```
+$ chmod +x hotdog
+
+$ ./hotdog command
 ```

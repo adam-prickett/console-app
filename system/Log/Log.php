@@ -1,4 +1,11 @@
 <?php
+/**
+ * Hotdog - Console Micro-Framework
+ *
+ * @author Ampersa Ltd <contact@ampersa.co.uk>
+ * @license MIT
+ * @copyright © Copyright Ampersa Ltd 2017.
+ */
 
 namespace System\Log;
 

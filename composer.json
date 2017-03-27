@@ -1,8 +1,8 @@
 {
-    "name": "ampersa/console-app",
-    "description": "Simple Console App Framework",
+    "name": "ampersa/hotdog",
+    "description": "Hotdog - A simple console app micro-framework",
     "require": {
-        "php": ">=5.6",
+        "php": ">=7.0",
         "vlucas/phpdotenv": "~2.4",
         "larapack/dd": "^1.1",
         "monolog/monolog": "^1.22"

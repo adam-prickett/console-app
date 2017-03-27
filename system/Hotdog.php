@@ -1,8 +1,8 @@
 <?php
 /**
- * Console App Framework
+ * Hotdog - Console Micro-Framework
  *
- * @author Adam Prickett <adam.prickett@ampersa.co.uk>
+ * @author Ampersa Ltd <contact@ampersa.co.uk>
  * @license MIT
  * @copyright © Copyright Ampersa Ltd 2017.
  */
@@ -15,11 +15,11 @@ use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
 
-class Application
+class Hotdog
 {
     use ConsoleOutput;
 
-    const VERSION = '1.4.1';
+    const VERSION = '2.0';
 
     protected $scriptName;
 
@@ -36,11 +36,7 @@ class Application
         
         $defaultCommandDirectories = [
             [
-                'file'      => rtrim(FRONT_CONTROLLER_PATH, '/').'/'.rtrim(env('COMMANDS_DIR', 'commands'), '/'),
-                'namespace' => 'Commands'
-            ],
-            [
-                'file'      => rtrim(FRONT_CONTROLLER_PATH, '/').'/system/Commands',
+                'file'      => __DIR__.'/Commands',
                 'namespace' => 'System\Commands'
             ],
         ];
@@ -89,7 +85,7 @@ class Application
      * Return the version number
      * @return float
      */
-    public function version() : float
+    public function version()
     {
         return self::VERSION;
     }
@@ -140,9 +136,9 @@ class Application
         sort($commands);
 
         // Print the available commands
-        $this->output('---------------');
+        $this->output('--------------------');
         $this->warn('Available commands:', ['underscore', 'bold']);
-        $this->output('---------------');
+        $this->output('--------------------');
         foreach ($commands as $command) {
             $className = $map[$command];
             $instance = new $className();
@@ -153,7 +149,7 @@ class Application
             unset($instance);
             unset($className);
         }
-        $this->output('---------------');
+        $this->output('--------------------');
     }
 
     /**
@@ -250,7 +246,7 @@ class Application
     private function formatCommand(Command $instance)
     {
         $required = $instance->getRequiredArguments();
-        return sprintf("php %s %s %s", $this->scriptName, $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
+        return sprintf("php %s %s %s", str_replace('./', '', $this->scriptName), $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
             return !in_array($arg, $required) ? sprintf('[%s]', strtoupper($arg)) : strtoupper($arg);
         }, $instance->getArguments())));
     }
@@ -310,7 +306,7 @@ class Application
      */
     private function createPsr4Namespace($file, $namespace = null)
     {
-        $baseNamespace = str_replace(FRONT_CONTROLLER_PATH, '', $file);
+        $baseNamespace = str_replace(HD_PATH, '', $file);
         $namespaceParts = explode('/', $baseNamespace);
 
         if (!empty($namespace)) {

@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 /**
- * Console App Framework
+ * Hotdog - Console Micro-Framework
  *
  * @author Adam Prickett <adam.prickett@ampersa.co.uk>
  * @license MIT
@@ -10,14 +10,15 @@
 
 require 'vendor/autoload.php';
 
-define('FRONT_CONTROLLER_PATH', rtrim(dirname(__FILE__), '/').'/');
+define('HD_PATH', rtrim(dirname(__FILE__), '/').'/');
 
 // Load .env configuration
 $dotenv = new Dotenv\Dotenv('./');
 $dotenv->load();
 
 // Load to Console Application and run
-$app = new System\Application;
+$app = new System\Hotdog;
+$app->addCommandDirectory('./commands', 'Commands');
 $app->run();
 
 return;
