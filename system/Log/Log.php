@@ -22,16 +22,13 @@ class Log
         'alert'     => Logger::ALERT,
         'emergency' => Logger::EMERGENCY,
     ];
-
-    public function __construct()
-    {
-        if (!isset($logLevels[env('LOG_LEVEL', 'warning')])) {
-            throw new UnexpectedValueException('Invalid log level provided');
-        }
-
-        self::initLogger();
-    }
-
+    
+    /**
+     * Magic method to call methods on the Logger instance
+     * @param  string $name
+     * @param  array $arguments
+     * @return 
+     */
     public static function __callStatic($name, $arguments)
     {
         if (empty(self::$logger)) {
@@ -49,55 +46,10 @@ class Log
         throw new BadMethodCallException(sprintf('%s does not exist', $name));
     }
 
-    // public static function debug($message)
-    // {
-    //     self::log($message, 'debug');
-    // }
-
-    // public static function info($message)
-    // {
-    //     self::log($message, 'info');
-    // }
-
-    // public static function notice($message)
-    // {
-    //     self::log($message, 'notice');
-    // }
-
-    // public static function warning($message)
-    // {
-    //     self::log($message, 'warning');
-    // }
-
-    // public static function error($message)
-    // {
-    //     self::log($message, 'error');
-    // }
-
-    // public static function critical($message)
-    // {
-    //     self::log($message, 'critical');
-    // }
-
-    // public static function alert($message)
-    // {
-    //     self::log($message, 'alert');
-    // }
-
-    // public static function emergency($message)
-    // {
-    //     self::log($message, 'emergency');
-    // }
-
-    protected static function log($message, $level)
-    {
-        if (empty(self::$logger)) {
-            self::initLogger();
-        }
-        
-        self::$logger->{$level}($message);
-    }
-
+    /**
+     * Init the Logger instance
+     * @return void
+     */
     protected static function initLogger()
     {
         self::$logger = new Logger('logger');

@@ -19,7 +19,7 @@ class Application
 {
     use ConsoleOutput;
 
-    const VERSION = 1.4;
+    const VERSION = '1.4.1';
 
     protected $scriptName;
 
