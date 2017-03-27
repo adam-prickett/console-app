@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 /**
- * Hotdog - Console Micro-Framework
+ * Axo - Console Micro-Framework
  *
  * @author Adam Prickett <adam.prickett@ampersa.co.uk>
  * @license MIT
@@ -10,14 +10,14 @@
 
 require 'vendor/autoload.php';
 
-define('HD_PATH', rtrim(dirname(__FILE__), '/').'/');
+define('AXO_PATH', rtrim(dirname(__FILE__), '/').'/');
 
 // Load .env configuration
 $dotenv = new Dotenv\Dotenv('./');
 $dotenv->load();
 
 // Load to Console Application and run
-$app = new System\Hotdog;
+$app = new System\Axo;
 $app->addCommandDirectory('./commands', 'Commands');
 $app->run();
 

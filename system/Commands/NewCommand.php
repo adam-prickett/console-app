@@ -1,6 +1,6 @@
 <?php
 /**
- * Hotdog - Console Micro-Framework
+ * Axo - Console Micro-Framework
  *
  * @author Ampersa Ltd <contact@ampersa.co.uk>
  * @license MIT
@@ -37,7 +37,7 @@ class NewCommand extends Command
         return <<<EOS
 Create a new command from stub file and place in the commands directory
 
-php hotdog new NAME COMMAND
+php axo new NAME COMMAND
 
 Options
 ---------

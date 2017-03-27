@@ -1,4 +1,4 @@
-# Hotdog
+# Axo
 ## A Console App Micro-Framework
 
 ![license](https://img.shields.io/github/license/ampersa/console-app.svg)
@@ -10,10 +10,10 @@ A simple framework for creating console apps and quick microservices
 
 ## Usage
 
-Run ```php hotdog``` to list available commands:
+Run ```php axo``` to list available commands:
 
 ```
-$ php hotdog
+$ php axo
 --------------------
 Available commands:
 --------------------
@@ -25,11 +25,11 @@ new - Create a new command from stub
 ### Create a new Command
 
 ```
-$ php hotdog new --help
+$ php axo new --help
 
 Create a new command from stub file and place in the commands directory
 
-php hotdog new NAME COMMAND
+php axo new NAME COMMAND
 
 Options
 ---------
@@ -43,7 +43,7 @@ Options
 
 For example: 
 ```
-$ php hotdog new ProcessCommand process --description="Process a file"
+$ php axo new ProcessCommand process --description="Process a file"
 ```
 
 ### Global Options
@@ -196,10 +196,10 @@ Progress...
 
 ## Shortcut usage
 
-Hotdog may be run without the _php_ prefix:
+axo may be run without the _php_ prefix:
 
 ```
-$ chmod +x hotdog
+$ chmod +x axo
 
-$ ./hotdog command
+$ ./axo command
 ```

@@ -1,6 +1,6 @@
 <?php
 /**
- * Hotdog - Console Micro-Framework
+ * Axo - Console Micro-Framework
  *
  * @author Ampersa Ltd <contact@ampersa.co.uk>
  * @license MIT

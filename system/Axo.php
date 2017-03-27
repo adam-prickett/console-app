@@ -1,6 +1,6 @@
 <?php
 /**
- * Hotdog - Console Micro-Framework
+ * Axo - Console Micro-Framework
  *
  * @author Ampersa Ltd <contact@ampersa.co.uk>
  * @license MIT
@@ -15,7 +15,7 @@ use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
 
-class Hotdog
+class Axo
 {
     use ConsoleOutput;
 
@@ -306,7 +306,7 @@ class Hotdog
      */
     private function createPsr4Namespace($file, $namespace = null)
     {
-        $baseNamespace = str_replace(HD_PATH, '', $file);
+        $baseNamespace = str_replace(AXO_PATH, '', $file);
         $namespaceParts = explode('/', $baseNamespace);
 
         if (!empty($namespace)) {
