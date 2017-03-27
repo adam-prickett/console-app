@@ -1,6 +1,7 @@
 {
     "name": "ampersa/axo",
     "description": "Axo - A simple console app micro-framework",
+    "license": "MIT",
     "require": {
         "php": ">=7.0",
         "vlucas/phpdotenv": "~2.4",
