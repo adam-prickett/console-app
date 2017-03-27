@@ -2,18 +2,20 @@
 
 namespace {$COMMAND_NAMESPACE};
 
+use System\Log\Log;
 use System\Console\Command;
 
 class {$COMMAND_NAME} extends Command
 {
+    protected $signature = '{$COMMAND_COMMAND}';
+
     /**
      * Setup the Command
      * @return void
      */
     public function setup()
     {
-        $this->setCommand('{$COMMAND_COMMAND}')
-                ->setDescription('{$COMMAND_DESCRIPTION}');
+        //
     }
 
     /**

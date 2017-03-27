@@ -20,5 +20,9 @@ class Bootstrap
         date_default_timezone_set(env('APP_TIMEZONE', 'UTC'));
 
         mb_internal_encoding('UTF-8');
+
+        if (!ini_get('auto_detect_line_endings')) {
+            ini_set('auto_detect_line_endings', '1');
+        }
     }
 }

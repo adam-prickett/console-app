@@ -9,20 +9,23 @@
 
 namespace System\Commands;
 
+use System\Log\Log;
 use System\Console\Command;
 
 class NewCommand extends Command
 {
+    protected $signature = 'new (Create a new command)  {--namespace?}
+                                                        {--description?}
+                                                        {--dir?}
+                                                        {name}
+                                                        {command}';
     /**
      * Setup the Command
      * @return void
      */
     public function setup()
     {
-        $this->setCommand('new')
-                ->setDescription('Create a new command from stub')
-                ->requiresArgument('name')
-                ->requiresArgument('command');
+        //
     }
 
     /**
@@ -53,17 +56,17 @@ EOS;
      */
     public function run()
     {
-        if (file_exists(FRONT_CONTROLLER_PATH.$this->option('dir', '/commands').'/'.$this->argument('name').'.php')) {
+        if (file_exists(rtrim(FRONT_CONTROLLER_PATH, '/').$this->option('dir', '/commands').'/'.$this->argument('name').'.php')) {
             $this->error(sprintf('Command %s already exists', $this->argument('name')));
             die;
         }
 
-        if (!is_writable(FRONT_CONTROLLER_PATH.$this->option('dir', '/commands'))) {
+        if (!is_writable(rtrim(FRONT_CONTROLLER_PATH, '/').$this->option('dir', '/commands'))) {
             $this->error(sprintf('Command directory (%s) is not writable', $this->argument('dir', '/commands')));
             die;
         }
 
-        $stubFile = file_get_contents(FRONT_CONTROLLER_PATH.'/storage/stubs/command.stub');
+        $stubFile = file_get_contents(rtrim(FRONT_CONTROLLER_PATH, '/').'/storage/stubs/command.stub');
 
         $variables = [ 
             'COMMAND_NAME' => $this->argument('name'), 
@@ -74,10 +77,12 @@ EOS;
 
         $newFileContents = $this->parseStubVariables($stubFile, $variables);
 
-        // $this->output($newFile);
-        $newFile = fopen(FRONT_CONTROLLER_PATH.$this->option('dir', '/commands').'/'.$this->argument('name').'.php', 'w');
+        // Create the new Command file in place and put contents
+        $newFile = fopen(rtrim(FRONT_CONTROLLER_PATH, '/').$this->option('dir', '/commands').'/'.$this->argument('name').'.php', 'w');
         fwrite($newFile, $newFileContents);
         fclose($newFile);
+
+        Log::info(sprintf('New Command %s created at %s', $this->argument('name'), rtrim(FRONT_CONTROLLER_PATH, '/').$this->option('dir', '/commands').'/'.$this->argument('name').'.php'));
 
         $this->output(sprintf('New command %s created', $this->argument('name')));
     }

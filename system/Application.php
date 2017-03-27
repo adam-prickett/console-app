@@ -19,19 +19,34 @@ class Application
 {
     use ConsoleOutput;
 
-    const VERSION = '1.3';
+    const VERSION = 1.4;
 
     protected $scriptName;
+
+    protected $commandDirectories = [];
 
     /**
      * Runs the Console Application
      * @param  array    $arguments
      * @return output
      */
-    public function run()
+    public function run(array $arguments = null)
     {
         Bootstrap::run();
         
+        $defaultCommandDirectories = [
+            [
+                'file'      => rtrim(FRONT_CONTROLLER_PATH, '/').'/'.rtrim(env('COMMANDS_DIR', 'commands'), '/'),
+                'namespace' => 'Commands'
+            ],
+            [
+                'file'      => rtrim(FRONT_CONTROLLER_PATH, '/').'/system/Commands',
+                'namespace' => 'System\Commands'
+            ],
+        ];
+
+        $this->commandDirectories = array_merge($defaultCommandDirectories, $this->commandDirectories);
+
         $commandMap = $this->enumerateCommandsFromFiles();
 
         if (empty($arguments)) {
@@ -55,7 +70,28 @@ class Application
 
         // Return the negative
         printf('%s does not exist'.PHP_EOL, $parsed->getCommand());
-        die;
+        return;
+    }
+
+    /**
+     * Add a command directory to the Application
+     * @param string $directory
+     */
+    public function addCommandDirectory($directory, $namespace = null)
+    {
+        $this->commandDirectories[] = [
+            'file'      => rtrim($directory, '/'),
+            'namespace' => $namespace
+        ];
+    }
+
+    /**
+     * Return the version number
+     * @return float
+     */
+    public function version() : float
+    {
+        return self::VERSION;
     }
 
     /**
@@ -77,7 +113,9 @@ class Application
         }
 
         // Check for required() function and parse results
-        $this->handleRequired($instance, $arguments);
+        if (!$this->handleRequired($instance, $arguments)) {
+            return false;
+        }
 
         // Silence any output if --quiet or -q are parsed
         if (isset($options['quiet']) or isset($options['q'])) {
@@ -145,14 +183,18 @@ class Application
     {
         // Check for number of required arguments
         if (count($instance->getRequiredArguments()) > count($arguments->getArguments())) {
-            print $this->formatCommand($instance);
-            die;
+            print $this->formatCommand($instance).PHP_EOL;
+            return false;
         }
 
         // Iterate over required options, if provided
         foreach ($instance->getRequiredOptions() as $option) {
-            $this->checkRequiredOption($option, $arguments);
+            if (!$this->checkRequiredOption($option, $arguments)) {
+                return false;
+            }
         }
+
+        return true;
     }
 
     /**
@@ -172,17 +214,19 @@ class Application
             });
 
             if (count($present) == 0) {
-                printf("%s option missing", implode(' / ', array_map(function ($opt) {
+                printf("%s option missing".PHP_EOL, implode(' / ', array_map(function ($opt) {
                     return $this->formatOption($opt);
                 }, $option)));
-                die;
+                return false;
             }
         }
         
         if (!is_array($option) and !isset($options[$option])) {
-            printf("%s option missing", $this->formatOption($option));
-            die;
+            printf("%s option missing".PHP_EOL, $this->formatOption($option));
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -192,6 +236,10 @@ class Application
      */
     private function formatOption($option)
     {
+        if (substr($option, 0, 1) == '-') {
+            return $option;
+        }
+
         return strlen($option) == 1 ? '-'.$option : '--'.$option;
     }
 
@@ -214,22 +262,30 @@ class Application
     private function enumerateCommandsFromFiles()
     {
         $commands = [];
-        $files = $this->scanCommandDirectory();
-        foreach ($files as $file) {
-            // Generate fully namespaced PSR-4 class name from filename
-            $className = $this->createPsr4Namespace($file);
+        $entries = [];
 
-            // Create an instance of the class
-            $instance = new $className();
-            
-            if ($instance instanceof \System\Console\Command) {
-                if (!empty($instance->getCommand())) {
-                    $commands[$instance->getCommand()] = $className;
+        // Generate the command directory listings
+        foreach ($this->commandDirectories as $directoryEntry) {
+            $entries[] = ['commands' => $this->scanCommandDirectory($directoryEntry['file']), 'namespace' => $directoryEntry['namespace'] ?? null];
+        }
+
+        foreach ($entries as $entry) {
+            foreach ($entry['commands'] as $file) {
+                // Generate fully namespaced PSR-4 class name from filename
+                $className = $this->createPsr4Namespace($file, $entry['namespace']);
+
+                // Create an instance of the class
+                $instance = new $className();
+                
+                if ($instance instanceof \System\Console\Command) {
+                    if (!empty($instance->getCommand())) {
+                        $commands[$instance->getCommand()] = $className;
+                    }
                 }
-            }
 
-            // Tidy-up
-            unset($instance);
+                // Tidy-up
+                unset($instance);
+            }
         }
 
         return $commands;
@@ -239,9 +295,9 @@ class Application
      * Scan the Commands directory for .php files
      * @return array
      */
-    private function scanCommandDirectory()
+    private function scanCommandDirectory($directory)
     {
-        return array_filter(glob("{".FRONT_CONTROLLER_PATH.env('COMMANDS_DIR', 'commands')."/*.php,".FRONT_CONTROLLER_PATH."system/Commands/*.php}", GLOB_BRACE), function ($file) {
+        return array_filter(glob(sprintf('{%s/*.php}', $directory), GLOB_BRACE), function ($file) {
             return preg_match(env('COMMANDS_REGEX', '/\w\.php/'), $file);
         });
     }
@@ -249,13 +305,18 @@ class Application
     /**
      * Generate a PSR-4 compliant namespace string from an absolute file string
      * @param  string $file
+     * @param  string $namespace
      * @return string
      */
-    private function createPsr4Namespace($file)
+    private function createPsr4Namespace($file, $namespace = null)
     {
         $baseNamespace = str_replace(FRONT_CONTROLLER_PATH, '', $file);
         $namespaceParts = explode('/', $baseNamespace);
 
+        if (!empty($namespace)) {
+            return sprintf('\\%s\%s', $namespace, ucfirst(str_replace('.php', '', basename($file))));
+        }
+        
         return '\\'.implode('\\', array_map(function ($value) {
             return ucfirst(str_replace('.php', '', $value));
         }, $namespaceParts));

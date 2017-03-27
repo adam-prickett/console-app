@@ -9,21 +9,22 @@
 
 namespace Commands;
 
+use System\Log\Log;
 use System\Console\Command;
 
 class ExampleCommand extends Command
 {
+    protected $signature = 'example {--timestamp|-t}
+                                    {format}
+                                    {timezone?}';
+
     /**
      * Setup the Command
      * @return void
      */
     public function setup()
     {
-        $this->setCommand('example')
-                ->setDescription('Example command - prints the date and time')
-                ->requiresOption(['timestamp', 't'])
-                ->requiresArgument('format')
-                ->acceptsArgument('timezone');
+        //
     }
 
     /**
@@ -51,7 +52,8 @@ EOS;
     public function run()
     {
         $timestamp = $this->option(['timestamp', 't'], time());
+        $date = date($this->argument('format'), $timestamp);
 
-        $this->output(date($this->argument('format'), $timestamp));
+        $this->output($date);
     }
 }
