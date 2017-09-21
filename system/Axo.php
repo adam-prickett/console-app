@@ -19,11 +19,16 @@ class Axo
 {
     use ConsoleOutput;
 
-    const VERSION = '2.0.4';
+    const VERSION = '2.2.0';
 
+    /** @var string */
     protected $scriptName;
 
+    /** @var array */
     protected $commandDirectories = [];
+
+    /** @var array */
+    protected $commandMap = [];
 
     /**
      * Runs the Console Application
@@ -34,34 +39,26 @@ class Axo
     {
         Bootstrap::run();
         
-        $defaultCommandDirectories = [
-            [
-                'file'      => __DIR__.'/Commands',
-                'namespace' => 'System\Commands'
-            ],
-        ];
-
-        $this->commandDirectories = array_merge($defaultCommandDirectories, $this->commandDirectories);
-
-        $commandMap = $this->enumerateCommandsFromFiles();
+        $this->commandMap = $this->enumerateCommandsFromFiles();
 
         if (empty($arguments)) {
             $arguments = $_SERVER['argv'];
         }
+
         $this->scriptName = array_shift($arguments);
 
         // Parse the arguments into a useful array
-        $parser = new ArgumentParser;
-        $parsed = $parser->parse($arguments);
+        $parsed = (new ArgumentParser)
+                    ->parse($arguments);
 
         // If no command is provided, print the command list
         if (empty($parsed->getCommand())) {
-            return $this->printCommands($commandMap);
+            return $this->printCommands($this->commandMap);
         }
 
         // If this command exists in the map, run the command
-        if (isset($commandMap[$parsed->getCommand()])) {
-            return $this->runCommand($parsed, $commandMap);
+        if (isset($this->commandMap[$parsed->getCommand()])) {
+            return $this->runCommand($parsed, $this->commandMap);
         }
 
         // Return the negative
@@ -79,6 +76,22 @@ class Axo
             'file'      => rtrim($directory, '/'),
             'namespace' => $namespace
         ];
+    }
+
+    /**
+     * Add the System commands directory to the repository
+     * @return void
+     */
+    public function addSystemCommands()
+    {
+        $defaultCommandDirectories = [
+            [
+                'file'      => __DIR__.'/Commands',
+                'namespace' => 'System\Commands'
+            ],
+        ];
+
+        $this->commandDirectories = array_merge($defaultCommandDirectories, $this->commandDirectories);
     }
 
     /**

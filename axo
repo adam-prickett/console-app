@@ -12,12 +12,14 @@ require 'vendor/autoload.php';
 
 define('AXO_PATH', rtrim(dirname(__FILE__), '/').'/');
 
-// Load .env configuration
-$dotenv = new Dotenv\Dotenv('./');
+// Load DotEnv configuration from the root directory
+$dotenv = new Dotenv\Dotenv(AXO_PATH);
 $dotenv->load();
 
-// Load to Console Application and run
+// Instantiate a new instance of the Axo Application. Apply the required Command
+// directories, including system, for enumeration of Commands and then run
 $app = new System\Axo;
+$app->addSystemCommands();
 $app->addCommandDirectory('./commands', 'Commands');
 $app->run();
 

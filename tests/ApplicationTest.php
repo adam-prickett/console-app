@@ -19,9 +19,9 @@ class AxoApplicationTest extends PHPUnit_Framework_TestCase
 
     public function testApplicationLoads()
     {
-        $app = $this->getMockBuilder('System\Axo')
-                    ->setMethods(['version'])
-                    ->getMock();
+        $app = Mockery::mock(Axo::class);
+        $app->shouldReceive('version')
+                ->andReturn(1.0);
 
         $this->assertTrue(is_float($app->version()));
     }
