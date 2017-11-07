@@ -44,6 +44,18 @@ class Command
     /** @var array Options passed to the command */
     protected $options = [];
 
+    /** @var array Array of descriptions for options */
+    protected $optionDescriptions = [];
+
+    /** @var array Array of default values for options */
+    protected $optionDefaults = [];
+
+    /** @var array Array of descriptions for arguments */
+    protected $argumentDescriptions = [];
+
+    /** @var array Array of default values for arguments */
+    protected $argumentDefaults = [];
+
     public function __construct(ArgumentCollection $arguments = null)
     {
         if ($arguments instanceof ArgumentCollection) {
@@ -58,6 +70,22 @@ class Command
         }
 
         $this->parseSignature();
+    }
+
+    /**
+     * Assign an ArgumentCollection to the Command
+     *
+     * @param  ArgumentCollection $arguments
+     * @return Command
+     */
+    public function assignArguments(ArgumentCollection $arguments) : self
+    {
+        if ($arguments instanceof ArgumentCollection) {
+            $this->options = $arguments->getOptions();
+            $this->arguments = $arguments->getArguments();
+        }
+
+        return $this;
     }
 
     /**
@@ -77,7 +105,7 @@ class Command
             }
         }
         
-        if (!is_array($value) and isset($this->options[$value])) {
+        if (! is_array($value) and isset($this->options[$value])) {
             return $this->options[$value];
         }
 
@@ -156,12 +184,15 @@ class Command
      * @param string|array $option
      * @param bool         $required
      */
-    public function acceptsOption($option, $required = false)
+    public function acceptsOption($option, $required = false, string $description = null, $default = null)
     {
         $this->possibleOptions[] = $option;
         if ($required) {
             $this->requiredOptions[] = $option;
         }
+
+        $this->optionDescriptions[$this->getMainOptionParameter($option)] = $description;
+        $this->optionDefaults[$this->getMainOptionParameter($option)] = $default;
         
         return $this;
     }
@@ -179,12 +210,15 @@ class Command
      * Accepts an argument for the Command
      * @param  string $argument
      */
-    public function acceptsArgument($argument, $required = false)
+    public function acceptsArgument($argument, $required = false, string $description = null, $default = null)
     {
         $this->possibleArguments[] = $argument;
         if ($required) {
             $this->requiredArguments[] = $argument;
         }
+
+        $this->argumentDescriptions[$argument] = $description;
+        $this->argumentDefaults[$argument] = $default;
 
         return $this;
     }
@@ -199,12 +233,61 @@ class Command
     }
 
     /**
+     * Returns the possible options for this Command
+     * @return array
+     */
+    public function getPossibleOptions()
+    {
+        return $this->possibleOptions;
+    }
+
+    /**
      * Returns the acceptable arguments to this Command
      * @return array
      */
     public function getArguments()
     {
         return $this->possibleArguments;
+    }
+
+    /**
+     * Return the argument descriptions array
+     *
+     * @return array
+     */
+    public function getArgumentDescriptions() : array
+    {
+        return $this->argumentDescriptions;
+    }
+
+    /**
+     * Return the description for a given argument
+     *
+     * @return string
+     */
+    public function getArgumentDescription(string $argument) : string
+    {
+        return $this->argumentDescriptions[$argument] ?? null;
+    }
+
+    /**
+     * Return the option descriptions array
+     *
+     * @return array
+     */
+    public function getOptionDescriptions() : array
+    {
+        return $this->optionDescriptions;
+    }
+
+    /**
+     * Return the description for a given option
+     *
+     * @return string
+     */
+    public function getOptionDescription(string $option) : string
+    {
+        return $this->optionDescriptions[$option] ?? null;
     }
 
     /**
@@ -240,7 +323,7 @@ class Command
         preg_match_all('/\{([^\}]+)\}/', $this->signature, $parameters);
 
         // Iterate over the found options and apply
-        if (!empty($parameters[1]) and is_array($parameters[1])) {
+        if (! empty($parameters[1]) and is_array($parameters[1])) {
             foreach ($parameters[1] as $parameter) {
                 $this->parseSignatureParameter($parameter);
             }
@@ -254,11 +337,21 @@ class Command
      */
     protected function parseSignatureParameter($parameter)
     {
-        // Assume parameter is required unless ? flag is provided  
+        $description = null;
+        $default = null;
+
+        // Assume parameter is required unless ? flag is provided
         $required = true;
         if (substr($parameter, -1) == '?') {
             $required = false;
             $parameter = substr($parameter, 0, -1);
+        }
+
+        // Check for a colon (:) character in the parameter. If we find one, split
+        // on this as anything following this is a description of the parameter
+        // for the help display function
+        if (stripos($parameter, ':') !== false) {
+            list($parameter, $description) = array_map('trim', explode(':', $parameter));
         }
 
         // Check for multiple options/shortcuts
@@ -271,16 +364,31 @@ class Command
                 }
             }
 
-            return $this->acceptsOption($this->normaliseOptionParameter($parameterParts), $required);
+            return $this->acceptsOption($this->normaliseOptionParameter($parameterParts), $required, $description, $default);
         }
 
         // Check for options
         if (substr($parameter, 0, 1) == '-') {
-            return $this->acceptsOption($this->normaliseOptionParameter($parameter), $required);
+            return $this->acceptsOption($this->normaliseOptionParameter($parameter), $required, $description, $default);
         }
 
         // Must be an argument this far down
-        return $this->acceptsArgument($parameter, $required);
+        return $this->acceptsArgument($parameter, $required, $description, $default);
+    }
+
+    /**
+     * Retrieve the main option parameter
+     *
+     * @param  string|array $parameter
+     * @return string
+     */
+    protected function getMainOptionParameter($parameter) : string
+    {
+        if (is_array($parameter)) {
+            return $this->normaliseOptionParameter(array_shift($parameter));
+        }
+
+        return $this->normaliseOptionParameter($parameter);
     }
 
     /**

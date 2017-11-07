@@ -14,36 +14,9 @@ use System\Console\Command;
 
 class ExampleCommand extends Command
 {
-    protected $signature = 'example (An example command)    {--timestamp|-t}
-                                                            {format}
-                                                            {timezone?}';
-
-    /**
-     * Setup the Command
-     * @return void
-     */
-    public function setup()
-    {
-        //
-    }
-
-    /**
-     * Provides the help text for this command
-     * @return string
-     */
-    public function help()
-    {
-        return <<<EOS
-This is the help text for this command.
-Here we can explain the various options available.
-
-Options
----------
-
-  -t/--timestamp    Provides the timestamp to use, defaults to current
-  -q/--quiet        Silences output
-EOS;
-    }
+    protected $signature = 'example (An example command) {--timestamp : The timestamp to decode}
+                                                         {format : The format to display the date/time in}
+                                                         {timezone : The timezone to use for timestamp decoding?}';
 
     /**
      * Run the program
@@ -51,7 +24,7 @@ EOS;
      */
     public function run()
     {
-        $timestamp = $this->option(['timestamp', 't'], time());
+        $timestamp = $this->option('timestamp', time());
         $date = date($this->argument('format'), $timestamp);
 
         $this->output($date);

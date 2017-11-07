@@ -14,41 +14,11 @@ use System\Console\Command;
 
 class NewCommand extends Command
 {
-    protected $signature = 'new (Create a new command)  {--namespace?}
-                                                        {--description?}
-                                                        {--directory|-d?}
-                                                        {name}
-                                                        {command}';
-    /**
-     * Setup the Command
-     * @return void
-     */
-    public function setup()
-    {
-        //
-    }
-
-    /**
-     * Provides the help text for this command
-     * @return string
-     */
-    public function help()
-    {
-        return <<<EOS
-Create a new command from stub file and place in the commands directory
-
-php axo new NAME COMMAND
-
-Options
----------
-
-  --description     Set the description for the command listing
-  --namespace/-n    Override the default namespace for Commands
-  --dir/-d          Override the default commands directory (relative to run script)
-  --quiet/-q        Silences output
-  --help            Outputs this help message
-EOS;
-    }
+    protected $signature = 'new (Create a new command)  {--namespace : The namespace to create the command in ?}
+                                                        {--description : A description for the command ?}
+                                                        {--directory : The directory to store the new command in ?}
+                                                        {name : The name of the command file}
+                                                        {command : The command signature to run the new command}';
 
     /**
      * Run the program
@@ -68,10 +38,10 @@ EOS;
 
         $stubFile = file_get_contents(__DIR__.'/../Console/stubs/command.stub');
 
-        $variables = [ 
-            'COMMAND_NAME' => $this->argument('name'), 
-            'COMMAND_COMMAND' => $this->argument('command'), 
-            'COMMAND_DESCRIPTION' => $this->option('description', ''), 
+        $variables = [
+            'COMMAND_NAME' => $this->argument('name'),
+            'COMMAND_COMMAND' => $this->argument('command'),
+            'COMMAND_DESCRIPTION' => $this->option('description', ''),
             'COMMAND_NAMESPACE' => $this->option('namespace', 'Commands'),
         ];
 

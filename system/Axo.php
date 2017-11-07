@@ -10,6 +10,7 @@
 namespace System;
 
 use System\Console\Command;
+use System\Console\CommandMap;
 use System\Application\Bootstrap;
 use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
@@ -19,7 +20,7 @@ class Axo
 {
     use ConsoleOutput;
 
-    const VERSION = '2.2.0';
+    const VERSION = '2.3.1';
 
     /** @var string */
     protected $scriptName;
@@ -27,8 +28,8 @@ class Axo
     /** @var array */
     protected $commandDirectories = [];
 
-    /** @var array */
-    protected $commandMap = [];
+    /** @var CommandMap */
+    protected $commandMap;
 
     /**
      * Runs the Console Application
@@ -39,8 +40,14 @@ class Axo
     {
         Bootstrap::run();
         
-        $this->commandMap = $this->enumerateCommandsFromFiles();
+        // Build a new CommandMap and enumerate the commands from the files within
+        // the command directories specified in the $commandDirectors array
+        $this->commandMap = new CommandMap;
 
+        $this->enumerateCommandsFromFiles();
+
+        // If no arguments were passed to the run() method, grab the argv input from
+        // the $_SERVER global and assign to the arguments for parsing and use
         if (empty($arguments)) {
             $arguments = $_SERVER['argv'];
         }
@@ -48,27 +55,28 @@ class Axo
         $this->scriptName = array_shift($arguments);
 
         // Parse the arguments into a useful array
-        $parsed = (new ArgumentParser)
-                    ->parse($arguments);
+        $parsedArguments = (new ArgumentParser)
+                            ->parse($arguments);
 
         // If no command is provided, print the command list
-        if (empty($parsed->getCommand())) {
-            return $this->printCommands($this->commandMap);
+        if (empty($parsedArguments->getCommand())) {
+            return $this->printCommandList();
         }
 
         // If this command exists in the map, run the command
-        if (isset($this->commandMap[$parsed->getCommand()])) {
-            return $this->runCommand($parsed, $this->commandMap);
+        if ($this->commandMap->contains($parsedArguments->getCommand())) {
+            return $this->runCommand($parsedArguments);
         }
 
         // Return the negative
-        printf('%s does not exist'.PHP_EOL, $parsed->getCommand());
+        printf('The command [%s] does not exist'.PHP_EOL, $parsedArguments->getCommand());
         return;
     }
 
     /**
      * Add a command directory to the Application
-     * @param string $directory
+     * @param   string $directory
+     * @return  void
      */
     public function addCommandDirectory($directory, $namespace = null)
     {
@@ -109,10 +117,13 @@ class Axo
      * @param  array                $map
      * @return
      */
-    private function runCommand(ArgumentCollection $arguments, array $map)
+    private function runCommand(ArgumentCollection $arguments)
     {
-        $className = $map[$arguments->getCommand()];
-        $instance = new $className($arguments);
+        // Extract the command from the CommandMap by it's name and initialise the
+        // instance provided in the data array from the CommandMap storage
+        $command = $this->commandMap->get($arguments->getCommand());
+        $instance = $command['instance'];
+        $instance->assignArguments($arguments);
 
         $options = $arguments->getOptions();
 
@@ -122,7 +133,7 @@ class Axo
         }
 
         // Check for required() function and parse results
-        if (!$this->handleRequired($instance, $arguments)) {
+        if (! $this->handleRequired($instance, $arguments)) {
             return false;
         }
 
@@ -140,29 +151,28 @@ class Axo
 
     /**
      * Prints the available commands when no command is provided
+     * @param  CommandMap $map
      * @return output
      */
-    private function printCommands(array $map)
+    private function printCommandList()
     {
         // Get the commands for the listing
-        $commands = array_keys($map);
-        sort($commands);
+        $commands = array_keys($this->commandMap->all());
+
+        // Now, let's get the length of the longest command to produce a prettified
+        // table layout when printing the command list to the console all in line
+        $commandColumWidth = $this->getLongestElementLength($commands) + 4;
 
         // Print the available commands
+        $this->output(' ');
+        $this->output('Available commands:');
         $this->output('--------------------');
-        $this->warn('Available commands:', ['underscore', 'bold']);
-        $this->output('--------------------');
-        foreach ($commands as $command) {
-            $className = $map[$command];
-            $instance = new $className();
-            
-            $this->output($command, ['underscore'], false);
-            $this->output(' - '.$instance->getDescription());
-
-            unset($instance);
-            unset($className);
+        foreach ($this->commandMap->sort()->all() as $command => $data) {
+            // Output this line to the console with the command name and description
+            $this->warn(str_pad($command, $commandColumWidth), ['underscore'], false);
+            $this->output($data['description']);
         }
-        $this->output('--------------------');
+        $this->output(' ');
     }
 
     /**
@@ -178,7 +188,51 @@ class Axo
             return;
         }
 
-        printf('%s does not provide any help'.PHP_EOL, $arguments->getCommand());
+        // Calculate the longest string length within the arguments and options to
+        // allow us to display the data in a pretty column format in the console
+        $argumentColumnWidth = $this->getLongestElementLength($instance->getArguments()) + 4;
+        $optionColumnWidth = $this->getLongestElementLength($instance->getPossibleOptions()) + 6;
+
+        $columnWidth = $argumentColumnWidth >= $optionColumnWidth ? $argumentColumnWidth : $optionColumnWidth;
+
+        $this->output($instance->getDescription());
+
+        $this->output(' ');
+
+        $this->warn('USAGE');
+        $this->output($this->formatCommand($instance));
+        $this->output(' ');
+
+        if (count($instance->getArguments()) > 0) {
+            $this->warn('ARGUMENTS');
+
+            foreach ($instance->getArguments() as $argument) {
+                $this->info(str_pad($argument, $columnWidth), ['underscore'], false);
+                $this->output($instance->getArgumentDescription($argument));
+            }
+
+            $this->output(' ');
+        }
+
+        $this->warn('OPTIONS');
+
+        foreach ($instance->getPossibleOptions() as $option) {
+            $this->info(str_pad('--'.$option, $columnWidth), ['underscore'], false);
+            $this->output($instance->getOptionDescription($option));
+        }
+
+        // Show global --help option
+        $this->info(str_pad('--help', $columnWidth), ['underscore'], false);
+        $this->output('Displays this help text');
+
+        // Show global --quiet option
+        $this->info(str_pad('--quiet', $columnWidth), ['underscore'], false);
+        $this->output('Silences the commands output');
+
+        $this->output(' ');
+
+
+        // printf('%s does not provide any help'.PHP_EOL, $arguments->getCommand());
         return 0;
     }
 
@@ -198,7 +252,7 @@ class Axo
 
         // Iterate over required options, if provided
         foreach ($instance->getRequiredOptions() as $option) {
-            if (!$this->checkRequiredOption($option, $arguments)) {
+            if (! $this->checkRequiredOption($option, $arguments)) {
                 return false;
             }
         }
@@ -230,7 +284,7 @@ class Axo
             }
         }
         
-        if (!is_array($option) and !isset($options[$option])) {
+        if (! is_array($option) and ! isset($options[$option])) {
             printf("%s option missing".PHP_EOL, $this->formatOption($option));
             return false;
         }
@@ -256,26 +310,29 @@ class Axo
      * Format the command syntax for outputting
      * @return string
      */
-    private function formatCommand(Command $instance)
+    private function formatCommand(Command $instance) : string
     {
         $required = $instance->getRequiredArguments();
-        return sprintf("php %s %s %s", str_replace('./', '', $this->scriptName), $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
-            return !in_array($arg, $required) ? sprintf('[%s]', strtoupper($arg)) : strtoupper($arg);
+
+        return sprintf('php %s %s %s', str_replace('./', '', $this->scriptName), $instance->getCommand(), implode(' ', array_map(function ($arg) use ($required) {
+            return ! in_array($arg, $required) ? sprintf('[%s]', strtoupper($arg)) : strtoupper($arg);
         }, $instance->getArguments())));
     }
 
     /**
      * Enumerate commands from filesystem
-     * @return array
+     * @return void
      */
     private function enumerateCommandsFromFiles()
     {
-        $commands = [];
         $entries = [];
 
         // Generate the command directory listings
         foreach ($this->commandDirectories as $directoryEntry) {
-            $entries[] = ['commands' => $this->scanCommandDirectory($directoryEntry['file']), 'namespace' => $directoryEntry['namespace'] ?? null];
+            $entries[] = [
+                'commands' => $this->scanCommandDirectory($directoryEntry['file']),
+                'namespace' => $directoryEntry['namespace'] ?? null,
+            ];
         }
 
         foreach ($entries as $entry) {
@@ -287,8 +344,12 @@ class Axo
                 $instance = new $className();
                 
                 if ($instance instanceof \System\Console\Command) {
-                    if (!empty($instance->getCommand())) {
-                        $commands[$instance->getCommand()] = $className;
+                    if (! empty($instance->getCommand())) {
+                        $this->commandMap->add($instance->getCommand(), [
+                            'class' => $className,
+                            'description' => $instance->getDescription(),
+                            'instance' => $instance,
+                        ]);
                     }
                 }
 
@@ -296,15 +357,13 @@ class Axo
                 unset($instance);
             }
         }
-
-        return $commands;
     }
 
     /**
      * Scan the Commands directory for .php files
      * @return array
      */
-    private function scanCommandDirectory($directory)
+    private function scanCommandDirectory($directory) : array
     {
         return array_filter(glob(sprintf('{%s/*.php}', $directory), GLOB_BRACE), function ($file) {
             return preg_match(env('COMMANDS_REGEX', '/\w\.php/'), $file);
@@ -317,17 +376,42 @@ class Axo
      * @param  string $namespace
      * @return string
      */
-    private function createPsr4Namespace($file, $namespace = null)
+    private function createPsr4Namespace($file, $namespace = null) : string
     {
         $baseNamespace = str_replace(AXO_PATH, '', $file);
         $namespaceParts = explode('/', $baseNamespace);
 
-        if (!empty($namespace)) {
+        if (! empty($namespace)) {
             return sprintf('\\%s\%s', $namespace, ucfirst(str_replace('.php', '', basename($file))));
         }
         
         return '\\'.implode('\\', array_map(function ($value) {
             return ucfirst(str_replace('.php', '', $value));
         }, $namespaceParts));
+    }
+
+    /**
+     * Get the integer value of the length of the longest value in the array
+     *
+     * @param  array  $array
+     * @return int
+     */
+    protected function getLongestElementLength(array $array) : int
+    {
+        // Let's map the array we're given to return the string lengths of all the
+        // elements it contains into a new array.
+        $lengths = array_map(function ($val) {
+            return strlen($val);
+        }, $array);
+
+        // Now we can sort the elements by their value in reverse order, putting the
+        // longest by string length at the beginning of the resulting array
+        rsort($lengths);
+
+        // Now we can shift the first element off the array and return it giving us
+        // the integer length of the longest element string in the array elements
+        $longestCommand = array_shift($lengths);
+
+        return $longestCommand ?: 5;
     }
 }

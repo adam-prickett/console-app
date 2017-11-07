@@ -34,3 +34,20 @@ if (!function_exists('object_get')) {
         return $current;
     }
 }
+
+if (! function_exists('is_true')) {
+    /**
+     * Helper function to check for a truthy object
+     *
+     * Borrowed from https://secure.php.net/manual/en/function.boolval.php#116547
+     *
+     * @param  mixed $val
+     * @param  bool  $returnNull
+     * @return bool
+     */
+    function is_true($val, $returnNull = false) : bool
+    {
+        $boolval = (is_string($val) ? filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) : (bool) $val);
+        return ($boolval === null && ! $returnNull ? false : $boolval);
+    }
+}

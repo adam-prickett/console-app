@@ -7,35 +7,7 @@ use System\Console\Command;
 
 class {$COMMAND_NAME} extends Command
 {
-    protected $signature = '{$COMMAND_COMMAND}';
-
-    /**
-     * Setup the Command
-     * @return void
-     */
-    public function setup()
-    {
-        //
-    }
-
-    /**
-     * Provides the help text for this command
-     * @return string
-     */
-    public function help()
-    {
-        return <<<EOS
---------------------
-{$COMMAND_NAME}
-{$COMMAND_DESCRIPTION}
---------------------
-php axo {$COMMAND_COMMAND}
---------------------
-
-  -q/--quiet        Silences output
-  --help            Prints this help text
-EOS;
-    }
+    protected $signature = '{$COMMAND_COMMAND} ({$COMMAND_DESCRIPTION})';
 
     /**
      * Run the program

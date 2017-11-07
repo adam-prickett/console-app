@@ -17,9 +17,14 @@ $dotenv = new Dotenv\Dotenv(AXO_PATH);
 $dotenv->load();
 
 // Instantiate a new instance of the Axo Application. Apply the required Command
-// directories, including system, for enumeration of Commands and then run
+// directories for enumeration of Commands, including system commands if option
+// is set within the configuration. Once enumerated, run the Application
 $app = new System\Axo;
-$app->addSystemCommands();
+
+if (is_true($_ENV['LOAD_SYSTEM_COMMANDS'])) {
+    $app->addSystemCommands();
+}
+
 $app->addCommandDirectory('./commands', 'Commands');
 $app->run();
 
