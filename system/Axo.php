@@ -20,7 +20,7 @@ class Axo
 {
     use ConsoleOutput;
 
-    const VERSION = '2.3.1';
+    const VERSION = '2.3.2';
 
     /** @var string */
     protected $scriptName;
