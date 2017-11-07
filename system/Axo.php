@@ -41,7 +41,7 @@ class Axo
         Bootstrap::run();
         
         // Build a new CommandMap and enumerate the commands from the files within
-        // the command directories specified in the $commandDirectors array
+        // the command directories specified in the $commandDirectories array
         $this->commandMap = new CommandMap;
 
         $this->enumerateCommandsFromFiles();
