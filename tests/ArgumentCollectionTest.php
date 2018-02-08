@@ -2,10 +2,10 @@
 
 namespace AppTests;
 
+use PHPUnit\Framework\TestCase;
 use System\Support\ArgumentCollection;
-use PHPUnit_Framework_TestCase;
 
-class ArgumentCollectionTest extends PHPUnit_Framework_TestCase
+class ArgumentCollectionTest extends TestCase
 {
     public function testConstructorSetsValues()
     {

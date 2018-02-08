@@ -2,11 +2,11 @@
 
 namespace AppTests;
 
+use PHPUnit\Framework\TestCase;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
-use PHPUnit_Framework_TestCase;
 
-class ArgumentParserTest extends PHPUnit_Framework_TestCase
+class ArgumentParserTest extends TestCase
 {
     public function testCommandIsParsed()
     {
@@ -20,7 +20,7 @@ class ArgumentParserTest extends PHPUnit_Framework_TestCase
         $results = $parser->parse($args);
 
         $this->assertInstanceOf(ArgumentCollection::class, $results);
-        
+
         $command = $results->getCommand();
         $this->assertEquals($command, 'test');
     }
@@ -35,7 +35,7 @@ class ArgumentParserTest extends PHPUnit_Framework_TestCase
 
         $parser = new ArgumentParser;
         $results = $parser->parse($args);
-        
+
         $options = $results->getOptions();
         $this->assertTrue(is_array($options));
         $this->assertCount(2, $options);
@@ -54,7 +54,7 @@ class ArgumentParserTest extends PHPUnit_Framework_TestCase
 
         $parser = new ArgumentParser;
         $results = $parser->parse($args);
-        
+
         $options = $results->getOptions();
         $this->assertTrue(is_array($options));
         $this->assertCount(2, $options);
@@ -72,7 +72,7 @@ class ArgumentParserTest extends PHPUnit_Framework_TestCase
 
         $parser = new ArgumentParser;
         $results = $parser->parse($args);
-        
+
         $arguments = $results->getArguments();
         $this->assertTrue(is_array($arguments));
         $this->assertEquals($arguments[0], 'argument1');
@@ -89,7 +89,7 @@ class ArgumentParserTest extends PHPUnit_Framework_TestCase
 
         $parser = new ArgumentParser;
         $results = $parser->parse($args);
-        
+
         $options = $results->getOptions();
         $this->assertEquals($options['option1'], 'value1');
     }

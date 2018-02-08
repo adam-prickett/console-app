@@ -3,11 +3,11 @@
 namespace AppTests;
 
 use Mockery;
-use PHPUnit_Framework_TestCase;
-use System\Support\ArgumentCollection;
 use System\Support\Bag;
+use PHPUnit\Framework\TestCase;
+use System\Support\ArgumentCollection;
 
-class BagTest extends PHPUnit_Framework_TestCase
+class BagTest extends TestCase
 {
     public function testConstructorSetsValues()
     {
@@ -37,6 +37,30 @@ class BagTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue($bag->contains('333'));
         $this->assertFalse($bag->contains('444'));
+    }
+
+    public function testDataCanBeAppendedToBag()
+    {
+        $array = [
+            1234,
+            2341,
+            3412,
+            4123,
+        ];
+
+        $expected = [
+            1234,
+            2341,
+            3412,
+            4123,
+            1111,
+        ];
+
+        $bag = new Bag($array);
+
+        $bag->append(1111);
+
+        $this->assertEquals($expected, $bag->toArray());
     }
 
     public function testHasReturnsCorrectResult()
@@ -88,6 +112,30 @@ class BagTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(['one' => 1, 'two' => '2', 'three' => '333', '4' => 'four'], $uniqueBag->all());
     }
 
+    public function testUniqueWithKeyStripsDuplicates()
+    {
+        $array = [
+            'one' => ['id' => 1, 'value' => 'lorem'],
+            'two' => ['id' => 2, 'value' => 'ipsum'],
+            'three' => ['id' => 3, 'value' => 'lorem'],
+            'four' => ['id' => 4, 'value' => 'amet'],
+        ];
+
+        $expected = [
+            'one' => ['id' => 1, 'value' => 'lorem'],
+            'two' => ['id' => 2, 'value' => 'ipsum'],
+            'four' => ['id' => 4, 'value' => 'amet'],
+        ];
+
+        $bag = new Bag($array);
+        $uniqueBag = $bag->unique('value');
+        $uniqueBag2 = $bag->unique('id');
+
+        $this->assertInstanceOf(Bag::class, $uniqueBag);
+        $this->assertEquals($expected, $uniqueBag->all());
+        $this->assertEquals($array, $uniqueBag2->all());
+    }
+
     public function testMergesPerformsWithBagAndArray()
     {
         $array = ['one' => 1, 'two' => '2', 'three' => '333', '4' => 'four'];
@@ -103,5 +151,47 @@ class BagTest extends PHPUnit_Framework_TestCase
         $this->assertInstanceOf(Bag::class, $mergedBag);
         $this->assertEquals(['one' => 1, 'two' => '2', 'three' => '333', '0' => 'four', 'merged' => 'yes'], $mergedBag->all());
         $this->assertEquals(['one' => 1, 'two' => '2', 'three' => '333', '0' => 'four', 'merged2' => 'true'], $mergedBag2->all());
+    }
+
+    public function testSumOnSingleDimensionalNumericalBasedArray()
+    {
+        $array = [
+            1,
+            2,
+            3,
+            4,
+        ];
+
+        $bag = new Bag($array);
+
+        $this->assertEquals(10, $bag->sum());
+    }
+
+    public function testSumOnAssociativeArrayWithKey()
+    {
+        $array = [
+            ['id' => 1, 'value' => 1234],
+            ['id' => 2, 'value' => 2341],
+            ['id' => 3, 'value' => 3412],
+            ['id' => 4, 'value' => 4123],
+        ];
+
+        $bag = new Bag($array);
+
+        $this->assertEquals(11110, $bag->sum('value'));
+    }
+
+    public function testSumOnArrayOfObjectsWithKey()
+    {
+        $array = [
+            new Bag(['id' => 1, 'value' => 1234]),
+            new Bag(['id' => 2, 'value' => 2341]),
+            new Bag(['id' => 3, 'value' => 3412]),
+            new Bag(['id' => 4, 'value' => 4123]),
+        ];
+
+        $bag = new Bag($array);
+
+        $this->assertEquals(11110, $bag->sum('value'));
     }
 }

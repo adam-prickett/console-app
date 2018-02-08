@@ -2,11 +2,11 @@
 
 namespace AppTests;
 
-use System\Axo;
 use Mockery;
-use PHPUnit_Framework_TestCase;
+use System\Axo;
+use PHPUnit\Framework\TestCase;
 
-class AxoApplicationTest extends PHPUnit_Framework_TestCase
+class AxoApplicationTest extends TestCase
 {
     public function setUp()
     {
@@ -28,7 +28,7 @@ class AxoApplicationTest extends PHPUnit_Framework_TestCase
 
     public function testApplicationFailsOnMissingCommand()
     {
-        $this->expectOutputString('commandnotexist does not exist'.PHP_EOL);
+        $this->expectOutputString("\033[37;41mThe command [commandnotexist] does not exist\033[0m".PHP_EOL);
 
         $app = $this->getMockBuilder('System\Axo')
                     ->setMethods()
@@ -74,5 +74,27 @@ class AxoApplicationTest extends PHPUnit_Framework_TestCase
         $app->addCommandDirectory(__DIR__.'/Commands', 'AppTests\Commands');
 
         $app->run(['run', 'test', '--option1', 'argument']);
+    }
+
+    public function testApplicationInjectsDepedencyToConstructor()
+    {
+        $this->expectOutputString('Bag is initialised');
+
+        $app = new \System\Axo;
+
+        $app->addCommandDirectory(__DIR__.'/Commands', 'AppTests\Commands');
+
+        $instance = $app->run(['run', 'inject']);
+    }
+
+    public function testApplicationInjectsDepedencyToRunCommand()
+    {
+        $this->expectOutputString('1 two');
+
+        $app = new \System\Axo;
+
+        $app->addCommandDirectory(__DIR__.'/Commands', 'AppTests\Commands');
+
+        $instance = $app->run(['run', 'inject2', 1, 'two']);
     }
 }

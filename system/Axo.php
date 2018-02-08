@@ -9,18 +9,22 @@
 
 namespace System;
 
+use Exception;
 use System\Console\Command;
+use InvalidArgumentException;
 use System\Console\CommandMap;
 use System\Application\Bootstrap;
 use System\Console\ConsoleOutput;
 use System\Support\ArgumentParser;
 use System\Support\ArgumentCollection;
+use System\Support\ResolvesDependencies;
 
 class Axo
 {
-    use ConsoleOutput;
+    use ConsoleOutput,
+        ResolvesDependencies;
 
-    const VERSION = '2.3.2';
+    const VERSION = '2.4.0';
 
     /** @var string */
     protected $scriptName;
@@ -32,19 +36,26 @@ class Axo
     protected $commandMap;
 
     /**
+     * Initialize the Application
+     */
+    public function __construct()
+    {
+        Bootstrap::run();
+
+        $this->commandMap = new CommandMap;
+    }
+
+    /**
      * Runs the Console Application
+     *
      * @param  array    $arguments
      * @return output
      */
     public function run(array $arguments = null)
     {
-        Bootstrap::run();
-        
         // Build a new CommandMap and enumerate the commands from the files within
         // the command directories specified in the $commandDirectories array
-        $this->commandMap = new CommandMap;
-
-        $this->enumerateCommandsFromFiles();
+        $this->enumerateCommandsFromFilesystem();
 
         // If no arguments were passed to the run() method, grab the argv input from
         // the $_SERVER global and assign to the arguments for parsing and use
@@ -69,12 +80,13 @@ class Axo
         }
 
         // Return the negative
-        printf('The command [%s] does not exist'.PHP_EOL, $parsedArguments->getCommand());
+        $this->error(sprintf('The command [%s] does not exist', $parsedArguments->getCommand()));
         return;
     }
 
     /**
      * Add a command directory to the Application
+     *
      * @param   string $directory
      * @return  void
      */
@@ -88,6 +100,7 @@ class Axo
 
     /**
      * Add the System commands directory to the repository
+     *
      * @return void
      */
     public function addSystemCommands()
@@ -104,6 +117,7 @@ class Axo
 
     /**
      * Return the version number
+     *
      * @return float
      */
     public function version()
@@ -113,44 +127,46 @@ class Axo
 
     /**
      * Run the command
+     *
      * @param  ArgumentCollection   $arguments
      * @param  array                $map
      * @return
      */
-    private function runCommand(ArgumentCollection $arguments)
+    private function runCommand(ArgumentCollection $parameters)
     {
         // Extract the command from the CommandMap by it's name and initialise the
         // instance provided in the data array from the CommandMap storage
-        $command = $this->commandMap->get($arguments->getCommand());
+        $command = $this->commandMap->get($parameters->getCommand());
         $instance = $command['instance'];
-        $instance->assignArguments($arguments);
+        $instance->assignArguments($parameters);
 
-        $options = $arguments->getOptions();
+        $options = $parameters->getOptions();
 
         // Handle --help option is provided
         if (isset($options['help'])) {
-            return $this->handleHelpOption($instance, $arguments);
+            return $this->handleHelpOption($instance, $parameters);
         }
 
         // Check for required() function and parse results
-        if (! $this->handleRequired($instance, $arguments)) {
+        if (! $this->handleRequired($instance, $parameters)) {
             return false;
         }
 
         // Silence any output if --quiet or -q are parsed
         if (isset($options['quiet']) or isset($options['q'])) {
             ob_start();
-            $instance->run();
+            return $this->call($instance, 'run', $parameters->getArguments());
             ob_end_clean();
 
             return;
         }
 
-        return $instance->run();
+        return $this->call($instance, 'run', $parameters->getArguments());
     }
 
     /**
      * Prints the available commands when no command is provided
+     *
      * @param  CommandMap $map
      * @return output
      */
@@ -177,6 +193,7 @@ class Axo
 
     /**
      * Check if --help option was provided and supply info
+     *
      * @param  Command              $instance
      * @param  ArgumentCollection   $arguments
      * @return mixed
@@ -231,13 +248,12 @@ class Axo
 
         $this->output(' ');
 
-
-        // printf('%s does not provide any help'.PHP_EOL, $arguments->getCommand());
         return 0;
     }
 
     /**
      * Check if required options are specified and parse
+     *
      * @param  Command              $instance
      * @param  ArgumentCollection   $arguments
      * @return mixed
@@ -262,6 +278,7 @@ class Axo
 
     /**
      * Check required params and validate
+     *
      * @param  string|array         $option
      * @param  ArgumentCollection   $arguments
      * @return void
@@ -283,7 +300,7 @@ class Axo
                 return false;
             }
         }
-        
+
         if (! is_array($option) and ! isset($options[$option])) {
             printf("%s option missing".PHP_EOL, $this->formatOption($option));
             return false;
@@ -294,6 +311,7 @@ class Axo
 
     /**
      * Format an option based on number of characters
+     *
      * @param  string $option
      * @return string
      */
@@ -308,6 +326,7 @@ class Axo
 
     /**
      * Format the command syntax for outputting
+     *
      * @return string
      */
     private function formatCommand(Command $instance) : string
@@ -321,9 +340,10 @@ class Axo
 
     /**
      * Enumerate commands from filesystem
+     *
      * @return void
      */
-    private function enumerateCommandsFromFiles()
+    private function enumerateCommandsFromFilesystem()
     {
         $entries = [];
 
@@ -341,8 +361,8 @@ class Axo
                 $className = $this->createPsr4Namespace($file, $entry['namespace']);
 
                 // Create an instance of the class
-                $instance = new $className();
-                
+                $instance = $this->instance($className);
+
                 if ($instance instanceof \System\Console\Command) {
                     if (! empty($instance->getCommand())) {
                         $this->commandMap->add($instance->getCommand(), [
@@ -361,6 +381,7 @@ class Axo
 
     /**
      * Scan the Commands directory for .php files
+     *
      * @return array
      */
     private function scanCommandDirectory($directory) : array
@@ -372,6 +393,7 @@ class Axo
 
     /**
      * Generate a PSR-4 compliant namespace string from an absolute file string
+     *
      * @param  string $file
      * @param  string $namespace
      * @return string
@@ -384,7 +406,7 @@ class Axo
         if (! empty($namespace)) {
             return sprintf('\\%s\%s', $namespace, ucfirst(str_replace('.php', '', basename($file))));
         }
-        
+
         return '\\'.implode('\\', array_map(function ($value) {
             return ucfirst(str_replace('.php', '', $value));
         }, $namespaceParts));

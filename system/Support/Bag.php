@@ -7,7 +7,7 @@ class Bag
     /** @var array */
     protected $items = [];
 
-    public function __construct($items)
+    public function __construct($items = [])
     {
         $this->items = $this->mutateToArray($items);
     }
@@ -19,6 +19,15 @@ class Bag
     public function all() : array
     {
         return $this->items;
+    }
+
+    /**
+     * Return the count of the items in the Bag
+     * @return int
+     */
+    public function count() : int
+    {
+        return count($this->items);
     }
 
     /**
@@ -66,12 +75,55 @@ class Bag
     }
 
     /**
+     * Append a value to the Bag, without a key
+     * @param  mixed $value
+     * @return void
+     */
+    public function append($value)
+    {
+        $this->items[] = $value;
+    }
+
+    /**
      * Filter to unique records only
      * @return Bag
      */
-    public function unique() : self
+    public function unique(string $key = null) : self
     {
-        return new static(array_unique($this->items));
+        if (is_null($key)) {
+            return new static(array_unique($this->items, SORT_REGULAR));
+        }
+
+        $unique = [];
+        $exists = [];
+
+        foreach ($this->items as $i => $item) {
+            if (! in_array($this->value($item, $key), $exists)) {
+                $unique[$i] = $item;
+                $exists[] = $this->value($item, $key);
+            }
+        }
+
+        return new static($unique);
+    }
+
+    /**
+     * Sum the values of the items, or specific keys, and return the total
+     * @param  string|null $key
+     * @return int|float
+     */
+    public function sum(string $key = null)
+    {
+        if (is_null($key)) {
+            return array_sum($this->items);
+        }
+
+        $sum = 0;
+        foreach ($this->items as $i => $item) {
+            $sum += $this->value($item, $key);
+        }
+
+        return $sum;
     }
 
     /**
@@ -101,7 +153,17 @@ class Bag
      */
     public function filter(callable $callback) : self
     {
-        return new static(array_filter($this->itms, $callback));
+        return new static(array_filter($this->items, $callback));
+    }
+
+    /**
+     * Iterate through the items reducing and carrying each time
+     * @param  callable $callback
+     * @return mixed
+     */
+    public function reduce(callable $callback, $initial = null)
+    {
+        return array_reduce($this->items, $callback, $initial);
     }
 
     /**
@@ -186,7 +248,27 @@ class Bag
         if (is_object($items) and method_exists($items, 'toArray')) {
             return $items->toArray();
         }
-        
+
         return [];
+    }
+
+    /**
+     * Automatically retrieve $key from $object in most scenarios
+     *
+     * @param  array|object $object
+     * @param  mixed $key
+     * @return mixed
+     */
+    private function value($object, $key)
+    {
+        if (is_array($object)) {
+            return $object[$key];
+        }
+
+        if (is_object($object)) {
+            return $object->{$key};
+        }
+
+        return false;
     }
 }
